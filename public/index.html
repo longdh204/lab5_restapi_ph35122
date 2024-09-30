@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Information</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        form { margin-bottom: 20px; }
+        input, button { margin: 5px 0; padding: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+<h1>Car Information Form</h1>
+<form id="carForm">
+    <input type="text" id="code" placeholder="Car Code" required><br>
+    <input type="text" id="color" placeholder="Car Color" required><br>
+    <input type="number" id="price" placeholder="Car Price" required><br>
+    <button type="submit">Submit</button>
+</form>
+
+<h2>Car List</h2>
+<table id="carTable">
+    <thead>
+    <tr>
+        <th>Code</th>
+        <th>Color</th>
+        <th>Price</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<div id="message"></div>
+
+<script>
+    const form = document.getElementById('carForm');
+    const table = document.getElementById('carTable').getElementsByTagName('tbody')[0];
+    const messageDiv = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const car = {
+            code: document.getElementById('code').value,
+            color: document.getElementById('color').value,
+            price: document.getElementById('price').value
+        };
+
+        try {
+            const response = await fetch('/api/cars', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(car)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            messageDiv.textContent = 'Car added successfully!';
+            messageDiv.style.color = 'green';
+            form.reset();
+            fetchCars();
+        } catch (error) {
+            console.error('Error:', error);
+            messageDiv.textContent = `Error: ${error.message}`;
+            messageDiv.style.color = 'red';
+        }
+    });
+
+    async function fetchCars() {
+        const response = await fetch('/api/cars');
+        const cars = await response.json();
+        table.innerHTML = '';
+        cars.forEach(car => {
+            const row = table.insertRow();
+            row.insertCell(0).textContent = car.code;
+            row.insertCell(1).textContent = car.color;
+            row.insertCell(2).textContent = car.price;
+        });
+    }
+
+    fetchCars();
+</script>
+</body>
+</html>
